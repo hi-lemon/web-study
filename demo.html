@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>在线选座demo</title>
+    <style>
+    	.demo {
+    		padding: 30px 0;
+		    float: left;
+		    width: 1514px;
+		    position: relative;
+    	}
+    	.demo >ul {
+		    position: absolute;
+		    border: 2px dashed #32abc5;
+		    padding: 5px;
+    	}
+    	.demo >ul >li {
+    		float: left;
+		    width: 40px;
+		    height: 40px;
+		    overflow: hidden;
+		    padding: 5px;
+    	}
+    	.screen {
+		    width: 500px;
+		    height: 50px;
+		    border: 1px solid #c1c1c1;
+		    margin: 0 auto;
+		    text-align: center;
+		    line-height: 50px;
+    	}
+    	.ipt {
+    		width: 25px;
+    		height: 25px;
+    	}
+    </style>
+</head>
+<body>
+<div id="demoId" class="demo"></div>
+<script type="text/javascript">
+    var html = "";
+	html += '<div class="screen">在线选座</div><ul class="seats" id="seatId">';
+	for(var i=1; i<=900; i++){
+		html+='<li>';
+		html+='<input class="ipt" type="checkbox" onclick="inputClick('+i+');" name="seat-'+i+'" id="seat-'+i+'" />';
+		html+='<label for="seat-'+i+'"></label>';
+		html+='</li>';
+	}
+	html += '</ul>';
+	document.getElementById("demoId").innerHTML = html;
+	function inputClick(i) {
+		var lines = "";
+		var rows = "";
+		var num = 30;
+		var numAll = 900;
+		lines = Math.ceil(i/30);
+		rows = num - (lines * num - i);
+		alert("您操作的是" + lines + "排" + rows + "列")
+	}
+	//挑战：如果座位增加到5万以上，会出现什么问题，如何解决？
+	//修改点：将44行for循环中的"900"更改为"50000+"，最好也将56行的变量"numAll"的值从"900"更改为"50000+"（如果对行列数有要求，需要加工下代码）
+	//现象：加载完成时间会比之前延长一些
+	//解决方案：如果用原生js来写，我没有想到比较好的解决方案
+</script>
+</body>
+</html>
