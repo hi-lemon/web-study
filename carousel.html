@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+	<header>
+		<title>luobo</title>
+		<style type="text/css">
+			* {
+				margin: 0;
+				padding: 0;
+				text-decoration: none;
+			}
+			body {
+				padding: 20px;
+			}
+			#container {
+				position: relative;
+				width: 600px;
+				height: 400px;
+				border: 3px solid #333;
+				overflow: hidden;
+			}
+			#list {
+				position: absolute;
+				z-index: 1;
+				width: 2400px;
+				height: 400px;
+			}
+			#list img {
+				width: 600px;
+				height: 400px;
+				float: left;
+			}
+			#buttons {
+				position: absolute;
+				left: 270px;
+				bottom: 20px;
+				z-index: 2;
+				height: 10px;
+				width: 100px;
+			}
+			#buttons span {
+				float: left;
+				margin-right: 5px;
+				width: 10px;
+				height: 10px;
+				border: 1px solid #fff;
+				border-radius: 50%;
+				background: #333;
+				cursor: pointer;
+			}
+			#buttons .on {
+				background: orangered;
+			}
+			.arrow {
+				position: absolute;
+				top: 180px;
+				z-index: 2;
+				display: none;
+				width: 40px;
+				height: 40px;
+				font-size: 36px;
+				font-weight: bold;
+				line-height: 39px;
+				text-align: center;
+				color: #fff;
+				background-color: rgba(0, 0, 0, .3);
+				cursor: pointer;
+			}
+			.arrow:hover {
+				background-color: rgba(0, 0, 0, .7);
+			}
+			#container:hover .arrow {
+				display: block;
+			}
+			#prev {
+				left: 20px;
+			}
+			#next {
+				right: 20px;
+			}
+		</style>
+	</header>
+	<body>
+		<div id="container">
+		    <div id="list" style="left: 0px;">
+		        <img src="1.png" alt="1" />
+		        <img src="2.png" alt="2" />
+		        <img src="3.png" alt="3" />
+		        <img src="4.png" alt="4" />
+		    </div>
+		    <div id="buttons">
+		        <span index="1" class="on"></span>
+		        <span index="2"></span>
+		        <span index="3"></span>
+		        <span index="4"></span>
+		    </div>
+		    <a href="javascript:void;" id="prev" class="arrow">&lt;</a>
+		    <a href="javascript:void;" id="next" class="arrow">&gt;</a>
+		</div>
+	</body>
+	<script>
+		window.onload = function () {
+			var list = document.getElementById('list');
+			var prev = document.getElementById('prev');
+			var next = document.getElementById('next');
+			function animate(offset){
+				var newLeft = parseInt(list.style.left) + offset;
+				list.style.left = newLeft + 'px';
+				if(newLeft<-1800 || newLeft>-600){
+				    list.style.left = 0 + 'px';
+				}
+				if(newLeft>0){
+				    list.style.left = -1800 + 'px';
+				}
+			}
+			var buttons = document.getElementById('buttons').getElementsByTagName('span');
+			var index = 1;
+			function buttonShow(){
+				for (var i = 0; i < buttons.length; i++) {
+                    if (buttons[i].className == 'on') {
+                        buttons[i].className = '';
+                    }
+                }
+                buttons[index - 1].className = 'on';
+			}
+			for (var i = 0; i < buttons.length; i++) {
+                (function(i) {
+                    buttons[i].onclick = function() {
+                        var clickIndex = parseInt(this.getAttribute('index'));
+                        var offset = 600 * (index - clickIndex); 
+                        animate(offset);
+                        index = clickIndex;
+                        buttonShow();
+                    }
+                })(i)
+            }
+			prev.onclick = function() {
+				index -= 1;
+				if(index < 1){
+					index = 4;
+				}
+				buttonShow();
+				animate(600);
+			}
+			next.onclick = function() {
+				index += 1;
+				if(index > 4){
+					index = 1;
+				}
+				buttonShow();
+				animate(-600);
+			}
+			var timer;
+			function playAuto(){
+				timer = setInterval(function(){
+					next.onclick();
+				}, 1000)
+			}
+			function stopAuto(){
+				clearInterval(timer);
+			}
+			playAuto();
+			var container = document.getElementById("container");
+			container.onmouseover = stopAuto;
+			container.onmouseout = playAuto;
+		}
+	</script>
+</html>
