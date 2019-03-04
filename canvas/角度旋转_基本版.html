@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>rotate</title>
+</head>
+<body>
+
+
+<div style="text-align: center;">
+    <br><br><br><br><br><br>
+
+    <canvas id="seventhC" width="300" height="300" style="border: 1px solid #fff123"></canvas>
+
+</div>
+
+<script>
+    window.onload=function () {
+        let cans = document.getElementById("seventhC");
+        let ctx = cans.getContext("2d");
+
+        ctx.strokeStyle="#FF2E98";
+
+        let c=0;
+        let t=setInterval(function () {
+            c++;
+//          ctx.clearRect(0,0,300,300);  //可选择是否叠加绘制
+            ctx.save();
+            ctx.translate(150,150);
+            ctx.rotate(c * Math.PI/180);
+            ctx.strokeRect(0,0,100,100);
+            ctx.restore();
+
+            stop();
+        },20);
+
+       function stop() {
+           if (c>360){
+               clearInterval(t)
+           }
+       }
+
+
+    }
+</script>
+
+</body>
+</html>
