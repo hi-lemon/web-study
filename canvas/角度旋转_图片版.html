@@ -1,0 +1,79 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="../lib/jquery.min.js"></script>
+</head>
+<body>
+    <canvas id="zdysxCavId" width="260" height="230" style="border: 1px solid #fff123"></canvas>
+</body>
+<script>
+    var data = [{
+        name: "进口名称1",
+        en_id: 1,
+        degree: 72
+    },{
+        name: "进口名称2",
+        en_id: 2,
+        degree: 144
+    },{
+        name: "进口名称3",
+        en_id: 3,
+        degree: 216
+    },{
+        name: "进口名称4",
+        en_id: 4,
+        degree: 288
+    },{
+        name: "进口名称5",
+        en_id: 5,
+        degree: 360
+    }];
+    var circleData = [];
+    var canvas = document.getElementById("zdysxCavId");
+    var ctx = canvas.getContext("2d");
+    var img = new Image();
+    img.src = 'image_left.png'; 
+    img.onload = function(){
+        for(var i = 0; i< data.length; i++){
+            circleData[i] = {};
+            circleData[i].en_id = data[i].en_id;//进口id
+            circleData[i].isClick = false;//是否点亮
+            circleData[i].circleR = 18;//圆半径
+            circleData[i].circleX = 130 + Math.cos(2 * Math.PI / 360 * data[i].degree) * 78;//圆心X轴坐标
+            circleData[i].circleY = 115 + Math.sin(2 * Math.PI / 360 * data[i].degree) * 78;//圆心Y轴坐标
+            data[i].img = new Image();
+            data[i].img.src = 'image_left.png'; 
+            drawZdysxCav(data[i].name, data[i].degree, data[i].img);
+        }
+    }
+    function drawZdysxCav(name, angle, img){
+        ctx.save();
+        ctx.translate(130,115);
+        ctx.rotate(Math.PI / 180 * angle);
+        ctx.drawImage(img, 60, -18);
+        if(angle > 90 && angle < 270){
+            ctx.save();
+            ctx.rotate(Math.PI  / 180 * 180);
+            ctx.fillText(name, -95, -25);
+            ctx.restore();
+        } else {
+            ctx.fillText(name, 60, 30);
+        }
+        ctx.restore();
+    }
+    document.getElementById("zdysxCavId").onclick = function () {
+        var p = {};
+        p.x = event.clientX - canvas.getBoundingClientRect().left;
+        p.y = event.clientY - canvas.getBoundingClientRect().top;
+        for(var i = 0; i < circleData.length; i++){
+            var dis = Math.sqrt((p.x - circleData[i].circleX) * (p.x - circleData[i].circleX) + (p.y - circleData[i].circleY) * (p.y - circleData[i].circleY));
+            if(dis <= circleData[i].circleR){
+                console.log(circleData[i].en_id);
+                circleData[i].isClick = true;
+            }
+        }
+    }
+</script>
+</html>
