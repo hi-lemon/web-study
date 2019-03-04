@@ -1,0 +1,353 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="../lib/jquery.min.js"></script>
+    <style>
+        div {
+            width: 840px;
+            height: 330px;
+        }
+        canvas {
+            border: 1px solid #c3c3c3;
+        }
+    </style>
+</head>
+<body>
+    <div id="demoDivId">
+        <canvas id="demoId" width="0" height="0"></canvas>
+    </div>
+</body>
+<script>
+    //支持div最小宽度：340,高度自适应，存在滚动条
+    var canvas = document.getElementById('demoId');
+    // 根据父级div大小设置Canvas宽度/高度
+    canvas.width = $("#demoDivId").width();
+    canvas.height = $("#demoDivId").height();
+    $("#demoId").bind("click", function(event){
+        console.log(event.clientX - canvas.getBoundingClientRect().left);
+        console.log(event.clientY - canvas.getBoundingClientRect().top);
+    });
+    var ctx = canvas.getContext('2d');
+    var aPx = 30;//坐标原点距离画布底部的距离
+    var bPx = 70;//坐标原点距离画布左侧的距离
+    var cPx = 40;//限制x/y轴距离画布顶部和右侧的距离
+    var dPx = 30;//画第一个的矩形左下角点距离坐标原点的垂直距离
+    var ePx = 4;//一组数据默认2个矩形之间的距离
+    var rectColor = ['#EB1F20','#27AF4B'];//矩形颜色红/绿
+    var drawData = [];//图标数据
+    var minDisData;//数据中最小距离
+    var baseX, baseY;//坐标轴原点坐标
+    var xScale = 30;//X轴坐标间隔
+    var xAxis;//X轴坐标间隔最小精度实际px
+    var yAxis;//Y轴坐标间隔最小精度实际px
+    var rectHeigt = 6; //矩形高度
+    var currentTime;//当前时间
+    if(canvas.height >= 300){
+        rectHeigt = 10;
+    }
+    //刷新时距图的状态的定时器参数
+    var startTimer = null;
+    //获取当前时间并格式化时间函数
+    function getTimeformat(){
+        var time =  new Date();
+        var Y = time.getFullYear();
+        var M = time.getMonth() + 1;
+            M = M < 10 ? '0' + M : M;// 不够两位补充0
+        var D = time.getDate();
+            D = D < 10 ? '0' + D : D;
+        var H = time.getHours();
+            H = H < 10 ? '0' + H : H;
+        var Mi = time.getMinutes();
+            Mi = Mi < 10 ? '0' + Mi : Mi;
+        var S = time.getSeconds();
+            S = S < 10 ? '0' + S : S;
+        currentTime = Y + '/' + M + '/' + D + ' ' + H + ':' + Mi + ':' + S;
+    }
+    //绘制X/Y轴
+    function drawXy() {
+        baseX = bPx;
+        baseY = canvas.height - aPx;
+        xAxis = (canvas.width - baseX - cPx) / 12;
+        ctx.beginPath();
+        ctx.moveTo(baseX, baseY);
+        ctx.lineTo(canvas.width, baseY);
+        ctx.lineTo(canvas.width - 5, baseY - 5);
+        ctx.moveTo(canvas.width, baseY);
+        ctx.lineTo(canvas.width - 5, baseY + 5);
+
+        ctx.moveTo(baseX, baseY);
+        ctx.lineTo(baseX, 0);
+        ctx.lineTo(baseX - 5, 5);
+        ctx.moveTo(baseX, 0);
+        ctx.lineTo(baseX + 5, 5);
+        ctx.closePath();
+        ctx.stroke();
+
+        drawXscale();
+        drawYscale();
+        drawRect();
+    }
+    //绘制X轴坐标尺度
+    function drawXscale() {
+        getTimeformat();
+        var x = baseX;
+        var text = 0;
+        for (var i=0; i < 13; i++) {
+            if (i > 0) {
+                x = x + xAxis;
+                text = text + xScale;
+            }
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = "black";
+            ctx.beginPath();
+            ctx.moveTo(x, baseY);
+            ctx.lineTo(x, baseY + 3);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.textBaseline = "top";
+            ctx.textAlign = "center";
+            if(i == 8){
+                ctx.fillText(currentTime, x, baseY + 15);
+                ctx.beginPath();
+                ctx.moveTo(x, baseY);
+                ctx.lineTo(x, 0);
+                ctx.closePath();
+                ctx.strokeStyle = "#dc143c";
+                ctx.stroke();
+            } else {
+                ctx.fillText(text, x, baseY + 3);
+            }
+        }
+    }
+    //绘制Y轴坐标尺度
+    function drawYscale() {
+        var y = baseY - dPx - rectHeigt - ePx / 2;
+        for (var i = 0; i < drawData.length; i++) {
+            if (i > 0){
+                y = y - yAxis * (drawData[i].distance / minDisData);
+            }
+            ctx.beginPath();
+            ctx.moveTo(baseX, y);
+            ctx.lineTo(baseX - 3, y);
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+    //绘制矩形
+    function drawRect() {
+        var rectBase = baseY - dPx - rectHeigt; //矩形右下点到原点的垂直距离为10
+        var changeY = rectBase;
+        for(var i = 0; i < drawData.length; i++){
+            var changeOneX = baseX;
+            var changeTwoX = baseX;
+            var dataAll = drawData[i];
+            if (i > 0){
+                changeY = changeY - yAxis * (drawData[i].distance / minDisData);
+            }
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = "black";
+            ctx.textBaseline = "middle";
+            ctx.textAlign = "end";
+            ctx.fillText(dataAll.name, baseX - 5, changeY - 3);
+            var j, rectWidth;
+            for(j = 0; j < drawData[i].childrenOne.length; j++){
+                var dataOne = drawData[i].childrenOne[j];
+                //换算之后实际矩形长度
+                rectWidth = xAxis / xScale * dataOne.time;
+                //不画超出X轴最末位横坐标的部分
+                if(changeOneX >= (canvas.width - cPx)){
+                    return;
+                }
+                if((changeOneX + rectWidth) >= (canvas.width - cPx)){
+                    rectWidth = canvas.width - cPx - changeOneX;
+                }
+                if(dataOne.isRed){
+                    ctx.fillStyle = rectColor[0];
+                } else {
+                    ctx.fillStyle = rectColor[1];
+                } 
+                ctx.fillRect(changeOneX, changeY, rectWidth - 1, rectHeigt);
+                changeOneX = changeOneX + rectWidth;
+            }
+            //自动补全
+            if(changeOneX < (canvas.width - cPx)){
+                ctx.fillStyle = rectColor[0];
+                ctx.fillRect(changeOneX, changeY, canvas.width - cPx - changeOneX, rectHeigt);
+            }
+            for(j = 0; j < drawData[i].childrenTwo.length; j++){
+                var dataTwo = drawData[i].childrenTwo[j];
+                //换算之后实际矩形长度
+                rectWidth = xAxis / xScale * dataTwo.time;
+                //不画超出X轴最末位横坐标的部分
+                if(changeTwoX >= (canvas.width - cPx)){
+                    return;
+                }
+                if((changeTwoX + rectWidth) >= (canvas.width - cPx)){
+                    rectWidth = canvas.width - cPx - changeTwoX;
+                }
+                if(dataTwo.isRed){
+                    ctx.fillStyle = rectColor[0];
+                } else {
+                    ctx.fillStyle = rectColor[1];
+                }
+                ctx.fillRect(changeTwoX, changeY - rectHeigt - ePx, rectWidth - 1, rectHeigt);
+                changeTwoX = changeTwoX + rectWidth;
+            }
+            //自动补全
+            if(changeTwoX < (canvas.width - cPx)){
+                ctx.fillStyle = rectColor[0];
+                ctx.fillRect(changeTwoX, changeY - rectHeigt - ePx, canvas.width - cPx - changeTwoX, rectHeigt);
+            }
+            //矩形右侧标记距离值
+            ctx.fillStyle = "black";
+            if(i > 0){
+                ctx.fillText(dataAll.distance, canvas.width - 15, changeY);
+            } else {
+                ctx.fillText(dataAll.distance, canvas.width - 25, changeY);
+            }
+            ctx.beginPath();
+            ctx.moveTo(207, 253);
+            ctx.lineTo(330, 32);
+            ctx.closePath();
+            ctx.strokeStyle = "#2C2E79";
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(282, 250);
+            ctx.lineTo(209, 31);
+            ctx.closePath();
+            ctx.strokeStyle = "#84892C";
+            ctx.stroke();
+        }
+    }
+    //获取数据
+    function getData(){
+        //每次更新数据时，先清除画布
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawData = [{
+            "name": "测试路口1",
+            "distance": 0,
+            "childrenOne": [{
+                name: "A",
+                isRed: true,
+                time: 50
+            },{
+                isRed: false,
+                time: 100
+            },{
+                isRed: true,
+                time: 150
+            },{
+                isRed: false,
+                time: 20
+            }],
+            "childrenTwo": [{
+                isRed: true,
+                time: 50
+            },{
+                isRed: false,
+                time: 100
+            },{
+                isRed: true,
+                time: 150
+            },{
+                isRed: false,
+                time: 20
+            }]
+        },{
+            "name": "测试路口2",
+            "distance": 200,
+            "childrenOne": [{
+                isRed: false,
+                time: 50
+            },{
+                isRed: true,
+                time: 80
+            },{
+                isRed: true,
+                time: 100
+            },{
+                isRed: false,
+                time: 60
+            },{
+                isRed: true,
+                time: 20
+            }],
+            "childrenTwo": [{
+                isRed: true,
+                time: 50
+            },{
+                isRed: false,
+                time: 100
+            },{
+                isRed: true,
+                time: 20
+            },{
+                isRed: false,
+                time: 80
+            },{
+                isRed: false,
+                time: 20
+            }]
+        },{
+            "name": "测试路口3",
+            "distance": 500,
+            "childrenOne": [{
+                isRed: false,
+                time: 10
+            },{
+                isRed: true,
+                time: 50
+            },{
+                isRed: true,
+                time: 60
+            },{
+                isRed: false,
+                time: 100
+            }],
+            "childrenTwo": [{
+                isRed: true,
+                time: 20
+            },{
+                isRed: false,
+                time: 150
+            },{
+                isRed: true,
+                time: 150
+            },{
+                isRed: false,
+                time: 100
+            }]
+        }];
+        if(drawData && drawData.length > 1){
+            //取数据中最小距离为基准计算比例
+            minDisData = drawData[1].distance;
+            var sumDisData = 0;//数据距离求和
+            for (var i = 1; i < drawData.length; i++) {
+                if(minDisData > drawData[i].distance){
+                    minDisData = drawData[i].distance;
+                }
+                sumDisData = sumDisData + drawData[i].distance;
+            }
+            yAxis = (canvas.height - aPx - cPx - dPx - rectHeigt - ePx / 2) / sumDisData * minDisData;
+            if(yAxis < 40){
+                yAxis = 40; //Y轴坐标间隔间实际px最小限制40
+            }
+            //根据返回数据计算出需要占用的空间，与画布高度比较，是否需要滚动条
+            var relCavHeight = 0;
+            for(var i = 1; i < drawData.length; i++){
+                relCavHeight = relCavHeight + yAxis * (drawData[i].distance / minDisData);
+            }
+            if(parseInt(relCavHeight) > (canvas.height - aPx - cPx - dPx - rectHeigt - ePx / 2 + 20)){
+                $("#demoDivId").css({"overflow-y": "auto", "overflow-x": "hidden"});
+                canvas.height = relCavHeight + aPx + cPx + dPx + rectHeigt + ePx / 2;
+                canvas.width = canvas.width - 20; //在div中为右侧滚动条预留空间20
+            }
+        }
+        drawXy();
+    }
+    getData();
+    startTimer = setInterval(getData, 1000);
+</script>
+</html>
