@@ -1,0 +1,254 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="../lib/jquery.min.js"></script>
+    <style>
+        div {
+            width: 640px;
+            height: 400px;
+        }
+        canvas {
+            border: 1px solid #c3c3c3;
+        }
+    </style>
+</head>
+<body>
+    <div id="demoDivId">
+        <canvas id="demoId" width="0" height="0"></canvas>
+    </div>
+</body>
+<script>
+    //支持div最小宽度：340,高度自适应，存在滚动条
+    var canvas = document.getElementById('demoId');
+    $("#demoId").bind("click", function(event){
+        console.log(event.clientX - canvas.getBoundingClientRect().left);
+        console.log(event.clientY - canvas.getBoundingClientRect().top);
+    });
+    // 设置Canvas宽度/高度
+    canvas.width = $("#demoDivId").width();
+    canvas.height = $("#demoDivId").height();
+    var data = [{
+        "name": "测试路口498",
+        "distance": 0,
+        "childrenOne": [{
+            isRed: true,
+            time: 50
+        },{
+            isRed: false,
+            time: 100
+        },{
+            isRed: true,
+            time: 150
+        }],
+        "childrenTwo": [{
+            isRed: true,
+            time: 50
+        },{
+            isRed: false,
+            time: 100
+        },{
+            isRed: true,
+            time: 150
+        }]
+    },{
+        "name": "测试路口3",
+        "distance": 100,
+        "childrenOne": [{
+            isRed: false,
+            time: 50
+        },{
+            isRed: true,
+            time: 100
+        },{
+            isRed: true,
+            time: 150
+        }],
+        "childrenTwo": [{
+            isRed: true,
+            time: 50
+        },{
+            isRed: false,
+            time: 100
+        },{
+            isRed: true,
+            time: 150
+        }]
+    },{
+        "name": "测试路口3",
+        "distance": 300,
+        "childrenOne": [{
+            isRed: false,
+            time: 50
+        },{
+            isRed: true,
+            time: 100
+        },{
+            isRed: true,
+            time: 150
+        }],
+        "childrenTwo": [{
+            isRed: true,
+            time: 50
+        },{
+            isRed: false,
+            time: 100
+        },{
+            isRed: true,
+            time: 150
+        }]
+    }];
+    var rectHeigt = 4; //矩形高度
+    if(canvas.height > 300){
+        rectHeigt = 8;
+    }
+    //根据返回数据确认canvas真实的height
+    var relCavHeight = 0;
+    for(var i = 0; i < data.length; i++){
+        relCavHeight = relCavHeight + data[i].distance;
+    }
+    if(!((canvas.height < 200 && relCavHeight <=400) || (canvas.height >=200 && canvas.height <=340 && relCavHeight <= 800) || (canvas.height > 340 && canvas.height <= 400 && relCavHeight <= 1100))){
+        canvas.height = canvas.height + 200;
+        canvas.width = canvas.width - 20;
+        $("#demoDivId").css({"overflow-y": "auto", "overflow-x": "hidden"});
+        rectHeigt = 8;
+    }
+    var ctx = canvas.getContext('2d');
+    //坐标轴原点坐标
+    var baseX = 70;  //原点距离div左侧的距离为70
+    var baseY = canvas.height - 30;  //原点距离div底部的距离为30
+    //绘制X/Y轴
+    ctx.beginPath();
+    ctx.moveTo(baseX, baseY);
+    ctx.lineTo(canvas.width, baseY);
+    ctx.lineTo(canvas.width - 5, baseY - 5);
+    ctx.moveTo(canvas.width, baseY);
+    ctx.lineTo(canvas.width - 5, baseY + 5);
+
+    ctx.moveTo(baseX, baseY);
+    ctx.lineTo(baseX, 0);
+    ctx.lineTo(baseX - 5, 5);
+    ctx.moveTo(baseX, 0);
+    ctx.lineTo(baseX + 5, 5);
+    ctx.closePath();
+    ctx.stroke();
+    //X轴坐标间隔
+    var xScale = 30;
+    //Y轴坐标间隔
+    var yScale = 100;
+    //计算X轴坐标间隔间实际px
+    var xYelPx = (canvas.width - baseX - 40) / 12;
+    //计算Y轴坐标间隔间实际px
+    var yYelPx = (canvas.height - 30 - 40 - 10) / parseInt(relCavHeight / yScale);
+    //绘制矩形
+    function drawRect() {
+        var rectBase = baseY - 10 - rectHeigt; //矩形右下点到原点的垂直距离为10
+        var changeY = rectBase;
+        for(var i = 0; i < data.length; i++){
+            var changeOneX = baseX;
+            var changeTwoX = baseX;
+            var dataAll = data[i];
+            changeY = changeY - yYelPx / yScale * dataAll.distance;
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = "black";
+            ctx.textBaseline = "middle";
+            ctx.textAlign = "end";
+            ctx.fillText(dataAll.name, baseX - 5, changeY - 3);
+            var j, rectWidth;
+            for(j = 0; j < data[i].childrenOne.length; j++){
+                var dataOne = data[i].childrenOne[j];
+                //换算之后实际矩形长度
+                rectWidth = xYelPx / xScale * dataOne.time;
+                if(dataOne.isRed){
+                    ctx.fillStyle = "red";
+                    ctx.fillRect(changeOneX, changeY, rectWidth, rectHeigt);
+                } else {
+                    ctx.fillStyle = "green";
+                    ctx.fillRect(changeOneX, changeY, rectWidth, rectHeigt);
+                }
+                changeOneX = changeOneX + rectWidth;
+            }
+            //自动补全
+            if(changeOneX < (canvas.width - 40)){
+                ctx.fillStyle = "red";
+                ctx.fillRect(changeOneX, changeY, canvas.width - 40 - changeOneX, rectHeigt);
+            }
+            for(j = 0; j < data[i].childrenTwo.length; j++){
+                var dataTwo = data[i].childrenTwo[j];
+                //换算之后实际矩形长度
+                rectWidth = xYelPx / xScale * dataTwo.time;
+                if(dataTwo.isRed){
+                    ctx.fillStyle = "red";
+                    ctx.fillRect(changeTwoX, changeY - rectHeigt - 4, rectWidth, rectHeigt);
+                } else {
+                    ctx.fillStyle = "green";
+                    ctx.fillRect(changeTwoX, changeY - rectHeigt - 4, rectWidth, rectHeigt);
+                }
+                changeTwoX = changeTwoX + rectWidth;
+            }
+            //自动补全
+            if(changeTwoX < (canvas.width - 40)){
+                ctx.fillStyle = "red";
+                ctx.fillRect(changeTwoX, changeY - rectHeigt - 4, canvas.width - 40 - changeTwoX, rectHeigt);
+            }
+            ctx.fillStyle = "black";
+            if(i > 0){
+                ctx.fillText(dataAll.distance, canvas.width - 15, changeY);
+            } else {
+                ctx.fillText(dataAll.distance, canvas.width - 25, changeY);
+            }
+        }
+    }
+    //绘制X轴坐标尺度
+    function drawXscale() {
+        var x = baseX;
+        var text = 0;
+        for (var i=0; i < 13; i++) {
+            if (i > 0) {
+                x = x + xYelPx;
+                text = text + xScale;
+            }
+            ctx.fillStyle = "black";
+            ctx.strokeStyle = "black";
+            ctx.beginPath();
+            ctx.moveTo(x, baseY);
+            ctx.lineTo(x, baseY + 3);
+            ctx.closePath();
+            ctx.stroke();
+            if(i == 0){
+                ctx.fillText(text, x - 3, baseY + 13);
+            } else if(i == 8){
+                ctx.fillText("current time", x, baseY + 15);
+                ctx.beginPath();
+                ctx.moveTo(x, baseY);
+                ctx.lineTo(x, 0);
+                ctx.closePath();
+                ctx.strokeStyle = "red";
+                ctx.stroke();
+            } else {
+                ctx.fillText(text, x, baseY + 3);
+            }
+            ctx.textBaseline = "top";
+            ctx.textAlign = "center";
+        }
+    }
+    //绘制Y轴坐标尺度
+    function drawYscale() {
+        var y = baseY - 10 - rectHeigt - 2;
+        for (var i=0; i < (parseInt(relCavHeight / yScale) + 1); i++) {
+            if (i > 0) {
+                y = y - yYelPx;
+            }
+            ctx.beginPath();
+            ctx.moveTo(baseX, y);
+            ctx.lineTo(baseX - 3, y);
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+    drawXscale();
+    drawYscale();
+    drawRect();
+</script>
+</html>
